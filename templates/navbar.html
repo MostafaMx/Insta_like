@@ -1,0 +1,48 @@
+<!-- filepath: c:\Users\Mostafa\Desktop\pr2\templates\navbar.html -->
+<!-- <nav>
+    {% if request.user.is_authenticated %}
+        
+        <a href="{% url 'logout_url' %}">LOGOUT</a>
+        <span style="margin: 20px;">Welcome, {{ request.user.username }}!</span>
+    {% else %}
+        <a href="{% url 'login_url' %}">Login or Register</a>
+    {% endif %}
+
+</nav>
+<style>
+    nav {
+        background: #eee;
+        padding: 10px;
+    }
+    nav a {
+        margin-right: 15px;
+        text-decoration: none;
+        color: #333;
+    }
+
+</style> -->
+{% load static %}
+<link rel="stylesheet" href="{% static 'Navbar/style.css' %}">
+<nav class="main-navbar">
+  <div class="navbar-left">
+    {% if request.user.is_authenticated %}
+      {% if not request.user.profilepic %}
+        <img src="{% static 'MyProfile\3985429.png' %}" alt="پروفایل" class="profile-pic">
+        {% else %}
+        <img src="{{ request.user.profilepic.url }}" alt="پروفایل" class="profile-pic">
+      {% endif %}
+      <span class="username"><a href="{% url 'myprofile' %}" style=" text-decoration: none; font-size: 25px;">{{ request.user.username }}</a></span>
+    {% else %}
+      <a href="{% url 'login_url' %}" class="nav-btn">ورود</a>
+      <a href="{% url 'register_url' %}" class="nav-btn">ثبت‌نام</a>
+    {% endif %}
+  </div>
+
+  <div class="navbar-center">
+    <h1 class="site-title">لوگوی سایت</h1>
+  </div>
+
+  <div class="navbar-right">
+    <!-- اینجا خالیه، بعداً خودت چیزی اضافه کن -->
+  </div>
+</nav>

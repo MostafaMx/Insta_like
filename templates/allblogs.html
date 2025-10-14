@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>همه پست‌ها</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{% static 'Allblogpage/style.css' %}">
+</head>
+<body>
+
+{% include 'navbar.html' %}
+
+<div class="navbar-right"></div>
+
+<section class="search-bar">
+  <form method="GET" action="{% url 'all_blogs_url' %}">
+    <input type="text" name="search" placeholder="جستجو بر اساس عنوان..." value="{{ search_query }}">
+    <button type="submit">🔍</button>
+  </form>
+  {% if search_query %}
+    <p style="color:#fff; margin-top:10px;">نتیجه یافت شده {{ count }} عدد</p>
+  {% endif %}
+</section>
+
+<section class="post-grid" id="post-grid">
+  {% for post in blogs %}
+    <div class="post-card">
+      <div class="post-header">
+        {% if post.author.profilepic %}
+          <img src="{{ post.author.profilepic.url }}" class="mini-pic" alt="پروفایل">
+        {% else %}
+          <img src="{% static 'MyProfile/3985429.png' %}" class="mini-pic" alt="پروفایل">
+        {% endif %}
+        <span class="mini-name">{{ post.author.username }}</span>
+        {% load humanize %}
+        <div class="date">{{ post.created_at|naturaltime }}</div>
+      </div>
+
+      <div class="post-image-box">
+        {% if post.image %}
+          <img src="{{ post.image.url }}" alt="پست" class="post-image">
+        {% endif %}
+      </div>
+
+      <div class="post-footer">
+        <p class="post-title">{{ post.title }}</p>
+        <hr class="divider">
+
+        <div class="post-actions" data-blog="{{ post.id }}">
+          {% if user.is_authenticated %}
+            <button class="like {% if post.reaction_type == 'like' %}active{% endif %}">
+              <img src="{% static 'Allblogpage/like.svg' %}" width="20" height="20" alt="like">
+            </button>
+            <span class="like-count">{{ post.number_of_likes }}</span>
+
+            <button class="dislike {% if post.reaction_type == 'dislike' %}active{% endif %}">
+              <img src="{% static 'Allblogpage/unlike.svg' %}" width="20" height="20" alt="dislike">
+            </button>
+            <span class="dislike-count">{{ post.number_of_dislikes }}</span>
+
+            <a href="{% url 'comments' blog_id=post.id %}" class="comment-link">
+              <img src="{% static 'Allblogpage/comments.svg' %}" width="23" height="23" alt="comments">
+            </a>
+
+            {% if post.image %}
+              <a href="{{ post.image.url }}" download id="image">
+                <img src="{% static 'Allblogpage/download.svg' %}" width="27" height="27" alt="download">
+              </a>
+            {% endif %}
+          {% else %}
+            <a href="{% url 'login_url' %}">
+              <img src="{% static 'Allblogpage/like.svg' %}" width="20" height="20" alt="like">
+            </a>
+            <span class="like-count">{{ post.number_of_likes }}</span>
+
+            <a href="{% url 'login_url' %}">
+              <img src="{% static 'Allblogpage/unlike.svg' %}" width="20" height="20" alt="dislike">
+            </a>
+            <span class="dislike-count">{{ post.number_of_dislikes }}</span>
+
+            <a href="{% url 'login_url' %}">
+              <img src="{% static 'Allblogpage/comments.svg' %}" width="23" height="23" alt="comments">
+            </a>
+
+            {% if post.image %}
+              <a href="{% url 'login_url' %}">
+                <img src="{% static 'Allblogpage/download.svg' %}" width="27" height="27" alt="download">
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p class="no-posts">هیچ پستی وجود ندارد.</p>
+  {% endfor %}
+</section>
+
+{% if blogs.has_next %}
+  <div style="text-align:center; margin:20px;">
+    <button id="load-more" data-next="{{ blogs.next_page_number }}">Show more</button>
+  </div>
+{% endif %}
+<script>
+function getCookie(name) {
+  let cookieValue = null
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';')
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim()
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+        break
+      }
+    }
+  }
+  return cookieValue
+}
+
+function sendReaction(blogId, type, likeBtn, dislikeBtn, likeCount, dislikeCount) {
+  const formData = new FormData()
+  formData.append('type', type)
+  fetch(`/react/${blogId}/`, {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+  })
+  .then(res => {
+    if (!res.ok) return null
+    return res.json()
+  })
+  .then(data => {
+    if (!data) return
+    likeCount.textContent = data.likes
+    dislikeCount.textContent = data.dislikes
+    likeBtn.classList.toggle('active', data.active === 'like')
+    dislikeBtn.classList.toggle('active', data.active === 'dislike')
+  })
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.post-actions').forEach(container => {
+    const blogId = container.dataset.blog
+    const likeBtn = container.querySelector('.like')
+    const dislikeBtn = container.querySelector('.dislike')
+    const likeCount = container.querySelector('.like-count')
+    const dislikeCount = container.querySelector('.dislike-count')
+
+    if (likeBtn && dislikeBtn && likeCount && dislikeCount) {
+      likeBtn.addEventListener('click', () => sendReaction(blogId, 'like', likeBtn, dislikeBtn, likeCount, dislikeCount))
+      dislikeBtn.addEventListener('click', () => sendReaction(blogId, 'dislike', likeBtn, dislikeBtn, likeCount, dislikeCount))
+    }
+  })
+
+  const btn = document.getElementById('load-more')
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const nextPage = btn.dataset.next
+      const url = new URL(window.location.href)
+      if (!nextPage) return
+      url.searchParams.set('page', nextPage)
+
+      fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(html, 'text/html')
+          const newGrid = doc.querySelector('#post-grid')
+          if (!newGrid) return
+          const newPosts = newGrid.innerHTML
+          const grid = document.querySelector('#post-grid')
+          if (!grid) return
+          grid.insertAdjacentHTML('beforeend', newPosts)
+
+          const newBtn = doc.getElementById('load-more')
+          if (newBtn && newBtn.dataset.next) {
+            btn.dataset.next = newBtn.dataset.next
+          } else {
+            btn.remove()
+          }
+        })
+    })
+  }
+})
+</script>
+
+</body>
+</html>

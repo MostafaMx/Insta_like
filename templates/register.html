@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>register page</title>
+    <!-- ...rest of your head... -->
+</head>
+<body>
+    <h1>register page</h1>
+    <p>this is my first website register page</p>
+    <hr>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <hr>
+    <form action="" method="POST">
+        {% csrf_token %}
+        <div class="form-holder" style="display: flex; flex-direction: column; gap: 15px; width: fit-content;">
+            <input type="text" placeholder="username" required name="username">
+            <input type="text" placeholder="phone" required name="phone">
+            <input type="password" placeholder="password" required name="password">
+            <input type="password" placeholder="repeat password" required name="repeatedPassword">
+            <input type="email" placeholder="email" name="email">
+        </div>
+        <button type="submit" style="padding: 15px; margin: 15px;">register</button>
+    </form>
+    <form action="{% url 'login_url' %}" method="get" style="margin-top: 10px;">
+    <button type="submit">Login Page</button>
+    </form>
+</body>
+</html>

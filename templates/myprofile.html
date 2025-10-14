@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>تنظیمات پروفایل</title>
+    <link rel="stylesheet" href="{% static 'MyProfile\style.css' %}">
+</head>
+
+<body>
+
+
+
+    <div class="profile-page">
+        <div class="profile-header">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% if request.user.is_authenticated %}
+                <div class="avatar-section">
+                    {% if user.profilepic %}
+                    <img id="avatar-img" src="{{ person.profilepic.url }}" alt="پروفایل">
+                    {% else %}
+                    <img id="avatar-img" src="{% static 'MyProfile\3985429.png' %}" alt="پروفایل">
+                    {% endif %}
+                    <input type="file"  name="profilepic" id="avatar-input" style="display: none">
+                    <p class="change-hint">برای تغییر عکس کلیک کنید</p>
+                </div>
+                <div class="user-info">
+                    <h1 id="username">{{ user.username }}</h1>
+                    <div class="stats">
+                        <span id="likes">❤️ 120 لایک</span>
+                        <span id="dislikes">👎 5 دیسلایک</span>
+                        <span id="post-count">🖼️ تعداد پست‌ها: 0</span>
+                    </div>
+                    <button ><a href="{% url 'home_url' %} " style="text-decoration: none; color: white;">➕ افزودن پست</a></button>
+                </div>
+                
+                <button type="submit">Save</button>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="user-posts">
+            <!-- فرضاً پست‌ها اینجا هستن -->
+            <div class="post-item"></div>
+            <div class="post-item"></div>
+            <div class="post-item"></div>
+        </div>
+    </div>
+</body>
+{% if messages %}
+  {% for message in messages %}
+    <div class="django-message" data-message="{{ message }}"></div>
+  {% endfor %}
+{% endif %}
+<script src="{% static 'MyProfile\myprofile.js' %}"></script>
+<script src="{% static 'massages.js' %}"></script>
+
+</html>

@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Blog App</title>
+    <link rel="stylesheet" href="{% static 'HomePage\css\style.css' %}">
+    <style>
+        nav {
+            background: #eee;
+            padding: 10px;
+        }
+
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .blog {
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+        }
+
+        .blog img {
+            max-width: 300px;
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <form method="get" action="">
+        <input type="text" name="search" placeholder="Search blogs..." value="{{ request.GET.search }}">
+        <button type="submit">Search</button>
+    </form> -->
+
+    {% include 'navbar.html' %}
+    <style>
+        nav {
+            background: #eee;
+            padding: 10px;
+        }
+
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #333;
+        }
+    </style>
+    <h1>All Blogs of {{ request.user.username }}</h1>
+    <hr>
+    <a href="{% url 'add_blog_url' %}" style="text-decoration: none; ">
+        <h2>+Add Blog</h2>
+    </a>
+
+    <div class="blogs">
+
+        {% for blog in blogs %}
+        <div class="blog">
+            {% if blog.image %}
+            <img src="{{ blog.image.url }}" alt="{{ blog.title }}">
+            {% endif %}
+            <div class="info">
+                <h2>{{ blog.title }}</h2>
+                <p>{{ blog.text }}</p>
+                <small>By {{ blog.author.name }} on {{ blog.created_at|date:"Y-m-d H:i" }}</small>
+                <br>
+                <a href="{% url 'edit_blog_url' blog.id %}">Edit Blog</a>
+                <br>
+                <a href="{% url 'delete_blog_url' blog.pk %}">Delete Blog</a>
+            </div>
+        </div>
+        {% empty %}
+        <p>No blogs available.</p>
+        {% endfor %}
+    </div>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="django-message" data-message="{{ message }}"></div>
+    {% endfor %}
+    {% endif %}
+    <script src="{% static 'massages.js' %}"></script>
+</body>
+
+</html>

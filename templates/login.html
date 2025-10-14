@@ -1,0 +1,96 @@
+{% load static %}
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login UI</title>
+  <link rel="stylesheet" href="{% static 'LoginPage\css\style.css' %}">
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="55" stroke="#FF7C2A" stroke-width="4"/>
+        <path d="M60 20 A40 40 0 1 1 20 60" stroke="#FF7C2A" stroke-width="12" fill="none"/>
+        <path d="M60 100 A40 40 0 1 1 100 60" stroke="#FF3C2A" stroke-width="12" fill="none"/>
+        <circle cx="60" cy="60" r="20" stroke="#FF7C2A" stroke-width="4"/>
+      </svg>
+    </div>
+    <div class="tabs">
+      <div class="tab active">Sign In</div>
+      <div class="tab">Sign Up</div>
+      <div class="tab-underline"></div>
+    </div>
+    <form class="login-form">
+      <div class="input-group">
+        <span class="icon mail"></span>
+        <input type="text" placeholder="Username" required>
+      </div>
+      <div class="input-group">
+        <span class="icon lock"></span>
+        <input type="password" placeholder="Password" required>
+      </div>
+      <div class="remember-row">
+        <label class="remember-label">
+          Remember me
+          <input type="checkbox" class="toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <button type="submit" class="sign-in-btn">SIGN IN</button>
+    </form>
+    <div class="forgot">Forgot your password?</div>
+  </div>
+  <script src="{% static 'LoginPage\js\script.js' %}"></script>
+</body>
+</html> -->
+
+
+
+<!-- my simple form -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+</head>
+
+<body>
+  <h1>login page</h1>
+  <hr>
+  {% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }} <style>
+        .error {
+          color: red;
+        }
+
+        .success {
+          color: green;
+        }
+      </style>
+      </li>
+      {% endfor %}
+      {% endif %}
+  </ul>
+  <form method="POST" action="">
+    {% csrf_token %}
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit">Login</button>
+  </form>
+  <form action="{% url 'register_url' %}" method="get" style="margin-top: 10px;">
+    <button type="submit">Register Page</button>
+  </form>
+</body>
+
+</html>

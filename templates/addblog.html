@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Add Blog</title>
+    <link rel="stylesheet" href="{% static 'HomePage/css/style.css' %}">
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+    <h1>Add a New Blog</h1>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="django-message" data-message="{{ message }}"></div>
+    {% endfor %}
+    {% endif %}
+    </ul>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="width: 100px; height: 30px;">Save</button>
+    </form>
+    <hr>
+    <a href="{% url 'home_url' %}" style="text-decoration: none;">
+        <h3>
+            <= Back to Home</h3>
+    </a>
+</body>
+
+</html>

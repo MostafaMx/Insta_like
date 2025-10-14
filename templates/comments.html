@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post Detail</title>
+  <link rel="stylesheet" href="{% static 'comments/style.css' %}">
+</head>
+<body>
+  <!-- بخش تصویر پست -->
+  <div class="post-header">
+    <img src="{{ blog.image.url }}" alt="post image" class="post-image">
+    <h1 class="post-title">{{ blog.title }}</h1>
+    <p class="post-description">{{ blog.text }}</p>
+  </div>
+
+  <!-- بخش کامنت‌ها -->
+  <div class="comments-section">
+    <h2>نظرات</h2>
+    <div id="comments-container">
+      {% if not comment %}
+        <p>هنوز نظری وجود ندارد. اولین نفر باشید که نظر می‌دهید!</p>
+      {% else %}
+      {% for comment in comments %}
+        <div class="comment" data-id="{{ comment.id }}">
+          <div class="comment-header">
+            <img src="{{ comment.user.profile_image.url }}" class="avatar">
+            <span class="username">{{ comment.user.username }}</span>
+            {% load humanize %}
+            <span class="timestamp">{{ comment.created_at|naturaltime }}</span>
+          </div>
+          <div class="comment-body">{{ comment.text }}</div>
+          <button class="reply-btn" onclick="showReplyForm({{ comment.id }})">پاسخ</button>
+
+          <!-- ریپلای‌ها -->
+          <div class="replies">
+            {% for reply in comment.replies.all %}
+              <div class="reply">
+                <div class="comment-header">
+                  <img src="{{ reply.user.profile_image.url }}" class="avatar">
+                  <span class="username">{{ reply.user.username }}</span>
+                  <span class="timestamp">{{ reply.created_at|naturaltime }}</span>
+                </div>
+                <div class="comment-body">{{ reply.text }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- فرم ارسال کامنت -->
+    <form id="comment-form" method="POST">
+      {% csrf_token %}
+      <textarea name="text" placeholder="نظر خود را بنویسید..." required></textarea>
+      <button type="submit">ارسال</button>
+    </form>
+  </div>
+
+<script src="{% static 'comments/comment.js' %}"></script>
+</body>
+</html>
