@@ -1,17 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Edit Blog</title>
+  <link rel="stylesheet" href="{% static 'addBlogs/style.css' %}">
+  <script defer src="{% static 'addBlogs/scripts.js' %}"></script>
+</head>
+<body>
+  <main class="container">
+    <a class="back-btn" href="{% url 'home_url' %}" aria-label="Back to home">← Back</a>
+
+    <header class="page-header">
+      <h1>Edit Blog</h1>
+    </header>
+
+    {% if messages %}
+      <div id="messages" class="messages-list" aria-live="polite">
+        {% for message in messages %}
+          <div class="msg toast" data-message="{{ message }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form id="blog-form" class="card form-card"
+          action="{% url 'edit_blog_url' blog.id %}"
+          method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="form-body">
+        {{ form.as_p }}
+
+        <div class="form-row file-row">
+          <label class="custom-file">
+            <input id="id_image" name="image" type="file" accept="image/*">
+            <span class="file-label">Choose image (optional)</span>
+          </label>
+
+          <div id="image-preview" class="image-preview" aria-hidden="true">
+            {% if blog.image %}
+              <img id="existing-image" src="{{ blog.image.url }}" alt="Current image">
+            {% endif %}
+          </div>
+        </div>
+
+        {% if blog.image %}
+          <div class="card" style="background:transparent;border:0;padding:6px 0;">
+            <label style="color:var(--muted);font-size:14px;display:flex;gap:10px;align-items:center;">
+              <input type="checkbox" name="remove_image" value="1"> Remove existing image
+            </label>
+          </div>
+        {% endif %}
+
+        <div class="meta-row">
+          <small class="char-count" id="title-count">Title: 0</small>
+          <small class="char-count" id="desc-count">Description: 0</small>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn primary">Save</button>
+          <button type="reset" class="btn ghost">Reset</button>
+        </div>
+      </div>
+    </form>
 
 
-{% block content %}
-  <h1>Edit Blog</h1>
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-<form action="{% url 'edit_blog_url' blog.id %}" method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save Changes</button>
-  </form>
-{% endblock %}
+  </main>
+</body>
+</html>

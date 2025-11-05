@@ -28,3 +28,18 @@ class Reaction(models.Model):
 
     class Meta:
         unique_together = ('user', 'blog')
+
+
+
+class Comment(models.Model):
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(Person, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    reply_to = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} @ {self.blog.title}"

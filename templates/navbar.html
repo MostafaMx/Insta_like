@@ -23,26 +23,39 @@
 </style> -->
 {% load static %}
 <link rel="stylesheet" href="{% static 'Navbar/style.css' %}">
-<nav class="main-navbar">
-  <div class="navbar-left">
+
+<nav class="main-navbar" role="navigation" aria-label="Main navigation">
+  <div class="nav-left">
+      <span class="site-title">MySite</span>
+
+  </div>
+
+  <div class="nav-center" aria-hidden="true">
+    <a class="nav-link" href="{% url 'all_blogs_url' %}">All blogs</a>
+    <a class="nav-link" href="">About</a>
+  </div>
+
+  <div class="nav-right">
     {% if request.user.is_authenticated %}
-      {% if not request.user.profilepic %}
-        <img src="{% static 'MyProfile\3985429.png' %}" alt="پروفایل" class="profile-pic">
-        {% else %}
-        <img src="{{ request.user.profilepic.url }}" alt="پروفایل" class="profile-pic">
-      {% endif %}
-      <span class="username"><a href="{% url 'myprofile' %}" style=" text-decoration: none; font-size: 25px;">{{ request.user.username }}</a></span>
+      <div class="profile">
+        <a href="{% url 'myprofile' %}" class="profile-btn" aria-label="Open profile">
+          {% if request.user.profilepic %}
+            <img src="{{ request.user.profilepic.url }}" alt="{{ request.user.username }}" class="profile-pic" />
+          {% else %}
+            <img src="{% static 'Navbar/3985429.png' %}" alt="Default avatar" class="profile-pic" />
+          {% endif %}
+          <span class="username">{{ request.user.username }}</span>
+        </a>
+      </div>
     {% else %}
-      <a href="{% url 'login_url' %}" class="nav-btn">ورود</a>
-      <a href="{% url 'register_url' %}" class="nav-btn">ثبت‌نام</a>
+      <div class="auth-actions">
+        <a class="nav-btn ghost" href="{% url 'login_url' %}">Login</a>
+        <a class="nav-btn" href="{% url 'register_url' %}">Sign up</a>
+      </div>
     {% endif %}
-  </div>
-
-  <div class="navbar-center">
-    <h1 class="site-title">لوگوی سایت</h1>
-  </div>
-
-  <div class="navbar-right">
-    <!-- اینجا خالیه، بعداً خودت چیزی اضافه کن -->
+    <!-- mobile menu toggle -->
+    <button class="mobile-toggle" aria-expanded="false" aria-label="Toggle menu" type="button">
+      <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
   </div>
 </nav>

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from .views import home, register_page, login_page, logout_page, add_blog, edit_blog, delete_blog, all_blogs,myprofile, toggle_reaction
+from .views import home, register_page, login_page, logout_page, add_blog, edit_blog, delete_blog, all_blogs,myprofile, toggle_reaction,comments_view,add_comment_view
 urlpatterns = [
     path('home/', home, name='home_url'),
     path('register/', register_page, name='register_url'),
@@ -11,7 +11,8 @@ urlpatterns = [
     path('deleteblog/<int:pk>/', delete_blog, name='delete_blog_url'),
     path('', all_blogs, name='all_blogs_url'),
     path('myprofile/',myprofile,name='myprofile'), # <-- add this line
-    # path('comments/<int:blog_id>/', comments_view, name='comments'),
+    path('comments/<int:blog_id>/', comments_view, name='comments'),
+    path('comments/<int:blog_id>/add/', add_comment_view, name='add_comment'),
     path('react/<int:blog_id>/', toggle_reaction, name='toggle_reaction'),
 ]
 

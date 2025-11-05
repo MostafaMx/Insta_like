@@ -51,16 +51,19 @@
 <!-- my simple form -->
 
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'loginandregister/style.css' %}">
   <title>Login</title>
 </head>
 
+
 <body>
-  <h1>login page</h1>
+  {% comment %} <h1>login page</h1>
   <hr>
   {% if messages %}
   <ul class="messages">
@@ -90,7 +93,48 @@
   </form>
   <form action="{% url 'register_url' %}" method="get" style="margin-top: 10px;">
     <button type="submit">Register Page</button>
-  </form>
+  </form> {% endcomment %}
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="login-page">
+  <div class="form">
+
+    <form class="login-form" method="POST" action="">
+      {% csrf_token %}
+      <input type="text" placeholder="username" placeholder="name" id="username" name="username" required  >
+      <input type="password" placeholder="password" id="password" name="password" required >
+      <button>login</button>
+      <p class="message">Not registered? <a href="{% url 'register_url' %}">Create an account</a></p>
+    </form>
+  </div>
+</div>
+
+
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="django-message" data-message="{{ message }}"></div>
+  {% endfor %}
+{% endif %}
+
+<script src = "{% static 'massages.js' %}" ></script>
 </body>
 
 </html>

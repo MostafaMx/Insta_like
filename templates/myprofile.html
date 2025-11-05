@@ -12,41 +12,80 @@
 <body>
 
 
+    <div class="cn">
+        <div class="profile-page">
+            <a class="back" href="{% url 'all_blogs_url' %}"><img src="{% static 'MyProfile\send.png' %}" alt="" width="35px" height="35px"></a>
+            <div class="infos">
+                <div class="profile-header">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% if request.user.is_authenticated %}
+                        <div class="avatar-section">
+                            {% if user.profilepic %}
+                            <img id="avatar-img" src="{{ person.profilepic.url }}" alt="پروفایل">
+                            {% else %}
+                            <img id="avatar-img" src="{% static 'MyProfile\3985429.png' %}" alt="پروفایل">
+                            {% endif %}
+                            <input type="file"  name="profilepic" id="avatar-input" style="display: none">
+                            <p class="change-hint">click on avatar to change</p>
+                            <hr class="divider">
+                        </div>
+                        <div class="user-info">
+                            <h1 id="username">{{ user.username }}</h1>
+                            <div class="stats">
+                                <span><img src="{% static 'MyProfile\like.svg' %}" alt="" width="23px" height="23px"><p>{{ total_likes }}</p></span>
+                                <span><P><img src="{% static 'MyProfile\unlike.svg' %}" alt=""width="23px" height="23px"><P>{{ total_dislikes }}</P></span>
+                                <span ><img src="{% static 'MyProfile\images.svg' %}" alt=""width="28px" height="28px"><P>{{ total_posts }}</P></span>
+                            </div>
+                            <hr class="divider" style="margin-bottom: 17px;">
+                            <div class="profactions">
+                                <button class="actionsbt" ><a href="{% url 'home_url' %} " style="text-decoration: none; color: white;"><img src="{% static 'MyProfile\images.svg' %}" width="20px" height="20px" alt="">Post Panel</a></button>
+                                <button class="actionsbt"><a href="{% url 'add_blog_url' %} " style="text-decoration: none; color: white;"><img src="{% static 'MyProfile\add.svg' %}" width="20px" height="20px" alt="">Add Post</a></button>
+                                <button class="actionsbt logout"><a href="{% url 'logout_url' %} " style="text-decoration: none; color: white; background-color:"><img width="20px" height="20px" src="{% static 'MyProfile\exit.svg' %}" alt="">Log Out </a></button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            <div class="posts">
+  {% if request.user.is_authenticated %}
+    {% if posts %}
+      <div class="user-posts">
+        {% for post in posts %}
+          <div class="post-item">
+            {% if post.image %}
+              <img class="imgpost" src="{{ post.image.url }}" alt="{{ post.title }}">
+            {% else %}
+              <img class="imgpost" src="{% static 'photo.jpg' %}" alt="no image">
+            {% endif %}
 
-    <div class="profile-page">
-        <div class="profile-header">
-            <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
-                {% if request.user.is_authenticated %}
-                <div class="avatar-section">
-                    {% if user.profilepic %}
-                    <img id="avatar-img" src="{{ person.profilepic.url }}" alt="پروفایل">
-                    {% else %}
-                    <img id="avatar-img" src="{% static 'MyProfile\3985429.png' %}" alt="پروفایل">
-                    {% endif %}
-                    <input type="file"  name="profilepic" id="avatar-input" style="display: none">
-                    <p class="change-hint">برای تغییر عکس کلیک کنید</p>
-                </div>
-                <div class="user-info">
-                    <h1 id="username">{{ user.username }}</h1>
-                    <div class="stats">
-                        <span id="likes">❤️ 120 لایک</span>
-                        <span id="dislikes">👎 5 دیسلایک</span>
-                        <span id="post-count">🖼️ تعداد پست‌ها: 0</span>
-                    </div>
-                    <button ><a href="{% url 'home_url' %} " style="text-decoration: none; color: white;">➕ افزودن پست</a></button>
-                </div>
-                
-                <button type="submit">Save</button>
-                {% endif %}
-            </form>
+            <div class="postsfooter">
+              <div class="likes">
+                <img src="{% static 'MyProfile/like.svg' %}" width="18" height="18" alt="like">
+                <p style="color:#00ADB5;">{{ post.number_of_likes|default:0 }}</p>
+              </div>
+              <div class="dislikes">
+                <img src="{% static 'MyProfile/unlike.svg' %}" width="18" height="18" alt="dislike">
+                <p style="color:#00ADB5;">{{ post.number_of_dislikes|default:0 }}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if has_more_posts %}
+        <div style="text-align:center; margin-top:16px;">
+          <a class="btn" href="{% url 'all_blogs_url' %}?search={{ person.username|urlencode }}">Show more</a>
         </div>
+      {% endif %}
 
-        <div class="user-posts">
-            <!-- فرضاً پست‌ها اینجا هستن -->
-            <div class="post-item"></div>
-            <div class="post-item"></div>
-            <div class="post-item"></div>
+    {% else %}
+      <h3 style="color: #fff; text-align: center; margin-top: 20px;">No posts yet!</h3>
+    {% endif %}
+  {% endif %}
+</div>
+            </div> 
         </div>
     </div>
 </body>

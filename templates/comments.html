@@ -1,64 +1,169 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Post Detail</title>
-  <link rel="stylesheet" href="{% static 'comments/style.css' %}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comments — {{ blog.title }}</title>
+  <link rel="stylesheet" href="{% static 'CommentPage/comments.css' %}">
 </head>
-<body>
-  <!-- بخش تصویر پست -->
-  <div class="post-header">
-    <img src="{{ blog.image.url }}" alt="post image" class="post-image">
-    <h1 class="post-title">{{ blog.title }}</h1>
-    <p class="post-description">{{ blog.text }}</p>
-  </div>
+<body dir="ltr">
+  <main class="c-container" role="main">
+    <a class="c-back" href="{% url 'all_blogs_url' %}">← Back</a>
 
-  <!-- بخش کامنت‌ها -->
-  <div class="comments-section">
-    <h2>نظرات</h2>
-    <div id="comments-container">
-      {% if not comment %}
-        <p>هنوز نظری وجود ندارد. اولین نفر باشید که نظر می‌دهید!</p>
-      {% else %}
-      {% for comment in comments %}
-        <div class="comment" data-id="{{ comment.id }}">
-          <div class="comment-header">
-            <img src="{{ comment.user.profile_image.url }}" class="avatar">
-            <span class="username">{{ comment.user.username }}</span>
-            {% load humanize %}
-            <span class="timestamp">{{ comment.created_at|naturaltime }}</span>
-          </div>
-          <div class="comment-body">{{ comment.text }}</div>
-          <button class="reply-btn" onclick="showReplyForm({{ comment.id }})">پاسخ</button>
+    <article class="c-blog card" aria-labelledby="blog-title">
+      <header class="c-blog-head">
+        <h1 id="blog-title" class="c-title">{{ blog.title }}</h1>
+        <time class="c-date" datetime="{{ blog.created_at }}">{{ blog.created_at|date:"j F Y" }}</time>
+      </header>
 
-          <!-- ریپلای‌ها -->
-          <div class="replies">
-            {% for reply in comment.replies.all %}
-              <div class="reply">
-                <div class="comment-header">
-                  <img src="{{ reply.user.profile_image.url }}" class="avatar">
-                  <span class="username">{{ reply.user.username }}</span>
-                  <span class="timestamp">{{ reply.created_at|naturaltime }}</span>
-                </div>
-                <div class="comment-body">{{ reply.text }}</div>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      {% endfor %}
+      {% if blog.image %}
+        <figure class="c-img">
+          <img src="{{ blog.image.url }}" alt="{{ blog.title }}">
+        </figure>
       {% endif %}
-    </div>
 
-    <!-- فرم ارسال کامنت -->
-    <form id="comment-form" method="POST">
-      {% csrf_token %}
-      <textarea name="text" placeholder="نظر خود را بنویسید..." required></textarea>
-      <button type="submit">ارسال</button>
-    </form>
-  </div>
+      <div class="c-excerpt">{{ blog.text|linebreaksbr }}</div>
+    </article>
 
-<script src="{% static 'comments/comment.js' %}"></script>
+    <section class="c-comments card" aria-labelledby="comments-heading">
+      <h2 id="comments-heading" class="c-comments-title">
+        Comments <span class="c-count">({{ comments|length }})</span>
+      </h2>
+
+      <ul class="c-list" id="comments-list" aria-live="polite">
+        {% for comment in comments %}
+          <li class="c-item" data-id="{{ comment.id }}">
+            <div class="c-item-head">
+              <strong class="c-user">{{ comment.user.username }}</strong>
+              <span class="c-time">{{ comment.created_at|timesince }} ago</span>
+            </div>
+
+            <div class="c-text">{{ comment.text|linebreaksbr }}</div>
+
+            <div class="c-item-actions">
+              <button type="button" class="c-reply-btn" data-reply-to="{{ comment.id }}" aria-label="Reply to comment">Reply</button>
+            </div>
+
+            {% if comment.replies.all %}
+              <ul class="c-replies" aria-label="Replies">
+                {% for reply in comment.replies.all %}
+                  <li class="c-reply" data-id="{{ reply.id }}">
+                    <div class="c-item-head">
+                      <strong class="c-user">{{ reply.user.username }}</strong>
+                      <span class="c-time">{{ reply.created_at|timesince }} ago</span>
+                    </div>
+                    <div class="c-text">{{ reply.text|linebreaksbr }}</div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="c-empty">No comments yet — be the first to comment!</li>
+        {% endfor %}
+      </ul>
+
+      <form class="c-form" id="comment-form" method="post" action="{% url 'add_comment' blog.id %}" novalidate aria-labelledby="comment-form-title">
+        {% csrf_token %}
+        <h3 id="comment-form-title" class="visually-hidden">Add a comment</h3>
+
+        <!-- hidden reply id -->
+        <input type="hidden" name="reply_to" id="reply-to-id" value="">
+
+        <label for="comment-text" class="visually-hidden">Comment text</label>
+        <textarea id="comment-text" name="text" rows="4" placeholder="Write your comment..." required></textarea>
+
+        <div class="c-form-row">
+          <button type="submit" class="c-submit">Send</button>
+          <button type="button" class="c-cancel" id="cancel-reply" style="display:none">Cancel reply</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Inline JS: only UI helpers, no AJAX, no fetch -->
+ <script>
+document.addEventListener('DOMContentLoaded', function () {
+  console.log('comments script loaded');
+
+  var commentsList = document.getElementById('comments-list');
+  var replyInput = document.getElementById('reply-to-id');
+  var commentForm = document.getElementById('comment-form');
+  var commentTextarea = document.getElementById('comment-text');
+  var cancelBtn = document.getElementById('cancel-reply');
+
+  if (!commentsList) {
+    console.log('comments-list not found');
+    return;
+  }
+  console.log('comments-list found, reply buttons count:', document.querySelectorAll('.c-reply-btn').length);
+
+  function clearReply() {
+    if (replyInput) replyInput.value = '';
+    if (commentTextarea) {
+      commentTextarea.placeholder = 'Write your comment...';
+      commentTextarea.blur();
+    }
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    var prev = document.querySelector('[data-reply-highlight]');
+    if (prev) prev.removeAttribute('data-reply-highlight');
+  }
+
+  // Delegated click handler for reply buttons
+  commentsList.addEventListener('click', function (e) {
+    var btn = e.target.closest('.c-reply-btn');
+    if (!btn) return;
+    e.preventDefault();
+    console.log('reply button clicked, element:', btn);
+
+    var commentId = btn.getAttribute('data-reply-to');
+    console.log('reply-to id:', commentId);
+    if (!commentId) return;
+
+    if (replyInput) replyInput.value = commentId;
+    if (commentTextarea) {
+      commentTextarea.focus();
+      commentTextarea.placeholder = 'Write your reply... (Ctrl+Enter to submit)';
+    }
+    if (cancelBtn) cancelBtn.style.display = '';
+    var li = btn.closest('li.c-item');
+    if (li) li.setAttribute('data-reply-highlight', 'true');
+
+    // scroll form into view
+    if (commentForm && typeof commentForm.scrollIntoView === 'function') {
+      commentForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  // cancel reply
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      clearReply();
+      console.log('reply cancelled');
+    });
+  }
+
+  // Ctrl+Enter submit
+  if (commentTextarea && commentForm) {
+    commentTextarea.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        commentForm.submit();
+      }
+    });
+  }
+
+  // defensive: trim on submit
+  if (commentForm) {
+    commentForm.addEventListener('submit', function () {
+      if (commentTextarea) commentTextarea.value = commentTextarea.value.replace(/\s+$/, '');
+    });
+  }
+
+});
+</script>
+
 </body>
 </html>

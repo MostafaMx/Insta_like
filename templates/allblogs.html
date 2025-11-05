@@ -1,190 +1,409 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="fa">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>همه پست‌ها</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="{% static 'Allblogpage/style.css' %}">
-</head>
-<body>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>All Posts</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="{% static 'Allblogpage/style.css' %}" />
+  </head>
+  <body>
+    {% include 'navbar.html' %}
 
-{% include 'navbar.html' %}
 
-<div class="navbar-right"></div>
 
-<section class="search-bar">
-  <form method="GET" action="{% url 'all_blogs_url' %}">
-    <input type="text" name="search" placeholder="جستجو بر اساس عنوان..." value="{{ search_query }}">
-    <button type="submit">🔍</button>
-  </form>
-  {% if search_query %}
-    <p style="color:#fff; margin-top:10px;">نتیجه یافت شده {{ count }} عدد</p>
-  {% endif %}
-</section>
-
-<section class="post-grid" id="post-grid">
-  {% for post in blogs %}
-    <div class="post-card">
-      <div class="post-header">
-        {% if post.author.profilepic %}
-          <img src="{{ post.author.profilepic.url }}" class="mini-pic" alt="پروفایل">
-        {% else %}
-          <img src="{% static 'MyProfile/3985429.png' %}" class="mini-pic" alt="پروفایل">
-        {% endif %}
-        <span class="mini-name">{{ post.author.username }}</span>
-        {% load humanize %}
-        <div class="date">{{ post.created_at|naturaltime }}</div>
+    <!-- Collapsible search bar (REPLACES previous simple .search-bar block) -->
+    <section class="search-bar collapsible" id="collapsible-search">
+      <div class="search-handle" id="search-handle" role="button" aria-expanded="false" aria-controls="collapsible-search-panel" tabindex="0" title="Pull down to search">
+        <span class="handle-line"></span>
+        <span class="handle-text">Search</span>
       </div>
 
-      <div class="post-image-box">
-        {% if post.image %}
-          <img src="{{ post.image.url }}" alt="پست" class="post-image">
+      <div class="search-panel" id="collapsible-search-panel" aria-hidden="true">
+        <form method="GET" action="{% url 'all_blogs_url' %}" class="panel-form">
+          <input type="text" name="search" placeholder="Search by title..." value="{{ search_query }}" />
+          <div class="panel-actions">
+            <button type="submit" class="panel-submit">🔍</button>
+            <button type="button" id="panel-clear" class="panel-clear">Clear</button>
+          </div>
+        </form>
+        {% if search_query %}
+          <p class="panel-result">Found {{ count }} results</p>
         {% endif %}
       </div>
+    </section>
 
-      <div class="post-footer">
-        <p class="post-title">{{ post.title }}</p>
-        <hr class="divider">
 
-        <div class="post-actions" data-blog="{{ post.id }}">
-          {% if user.is_authenticated %}
-            <button class="like {% if post.reaction_type == 'like' %}active{% endif %}">
-              <img src="{% static 'Allblogpage/like.svg' %}" width="20" height="20" alt="like">
-            </button>
-            <span class="like-count">{{ post.number_of_likes }}</span>
-
-            <button class="dislike {% if post.reaction_type == 'dislike' %}active{% endif %}">
-              <img src="{% static 'Allblogpage/unlike.svg' %}" width="20" height="20" alt="dislike">
-            </button>
-            <span class="dislike-count">{{ post.number_of_dislikes }}</span>
-
-            <a href="{% url 'comments' blog_id=post.id %}" class="comment-link">
-              <img src="{% static 'Allblogpage/comments.svg' %}" width="23" height="23" alt="comments">
-            </a>
-
-            {% if post.image %}
-              <a href="{{ post.image.url }}" download id="image">
-                <img src="{% static 'Allblogpage/download.svg' %}" width="27" height="27" alt="download">
-              </a>
+    <!-- posts grid -->
+    <section class="post-grid" id="post-grid">
+      {% for post in blogs %}
+        <div class="post-card" data-id="{{ post.id }}">
+          <div class="post-header">
+            {% if post.author.profilepic %}
+              <img src="{{ post.author.profilepic.url }}" class="mini-pic" alt="Profile" />
+            {% else %}
+              <img src="{% static 'MyProfile/3985429.png' %}" class="mini-pic" alt="Profile" />
             {% endif %}
-          {% else %}
-            <a href="{% url 'login_url' %}">
-              <img src="{% static 'Allblogpage/like.svg' %}" width="20" height="20" alt="like">
-            </a>
-            <span class="like-count">{{ post.number_of_likes }}</span>
+            <span class="mini-name">{{ post.author.username }}</span>
+            {% load humanize %}
+            <div class="date">{{ post.created_at|naturaltime }}</div>
+          </div>
 
-            <a href="{% url 'login_url' %}">
-              <img src="{% static 'Allblogpage/unlike.svg' %}" width="20" height="20" alt="dislike">
-            </a>
-            <span class="dislike-count">{{ post.number_of_dislikes }}</span>
-
-            <a href="{% url 'login_url' %}">
-              <img src="{% static 'Allblogpage/comments.svg' %}" width="23" height="23" alt="comments">
-            </a>
-
+          <div class="post-image-box">
             {% if post.image %}
-              <a href="{% url 'login_url' %}">
-                <img src="{% static 'Allblogpage/download.svg' %}" width="27" height="27" alt="download">
-              </a>
+              <img src="{{ post.image.url }}" alt="Post image" class="post-image" />
             {% endif %}
-          {% endif %}
+          </div>
+
+          <div class="post-footer">
+            <p class="post-title">{{ post.title }}</p>
+            <hr class="divider" />
+
+            <div class="post-actions" data-blog="{{ post.id }}">
+              {% if user.is_authenticated %}
+                <button class="like {% if post.reaction_type == 'like' %}active{% endif %}" type="button" aria-label="Like">
+                  <img src="{% static 'Allblogpage/like.svg' %}" width="20" height="20" alt="like" />
+                </button>
+                <span class="like-count">{{ post.number_of_likes }}</span>
+
+                <button class="dislike {% if post.reaction_type == 'dislike' %}active{% endif %}" type="button" aria-label="Dislike">
+                  <img src="{% static 'Allblogpage/unlike.svg' %}" width="20" height="20" alt="dislike" />
+                </button>
+                <span class="dislike-count">{{ post.number_of_dislikes }}</span>
+
+                <a href="{% url 'comments' blog_id=post.id %}" class="comment-link" title="Comments">
+                  <img src="{% static 'Allblogpage/comments.svg' %}" width="23" height="23" alt="comments" />
+                  <span class="comment-count">{{ post.comments.count }}</span>
+                </a>
+
+                {% if post.image %}
+                  <a href="{{ post.image.url }}" download class="download-link" title="Download image">
+                    <img src="{% static 'Allblogpage/download.svg' %}" width="27" height="27" alt="download" />
+                  </a>
+                {% endif %}
+              {% else %}
+                <a href="{% url 'login_url' %}" aria-label="Login to like"><img src="{% static 'Allblogpage/like.svg' %}" width="20" height="20" alt="like" /></a>
+                <span class="like-count">{{ post.number_of_likes }}</span>
+
+                <a href="{% url 'login_url' %}" aria-label="Login to dislike"><img src="{% static 'Allblogpage/unlike.svg' %}" width="20" height="20" alt="dislike" /></a>
+                <span class="dislike-count">{{ post.number_of_dislikes }}</span>
+
+                <a href="{% url 'login_url' %}" aria-label="Login to comment"><img src="{% static 'Allblogpage/comments.svg' %}" width="23" height="23" alt="comments" /></a>
+
+                {% if post.image %}
+                  <a href="{% url 'login_url' %}" aria-label="Login to download"><img src="{% static 'Allblogpage/download.svg' %}" width="27" height="27" alt="download" /></a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  {% empty %}
-    <p class="no-posts">هیچ پستی وجود ندارد.</p>
-  {% endfor %}
-</section>
+      {% empty %}
+        <p class="no-posts">No posts found.</p>
+      {% endfor %}
+    </section>
 
-{% if blogs.has_next %}
-  <div style="text-align:center; margin:20px;">
-    <button id="load-more" data-next="{{ blogs.next_page_number }}">Show more</button>
-  </div>
-{% endif %}
-<script>
+    {% if blogs.has_next %}
+      <div class="load-more-wrap">
+        <button id="load-more" data-next="{{ blogs.next_page_number }}">Show more</button>
+      </div>
+    {% endif %}
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="django-message" data-message="{{ message }}"></div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Inline JS (all behaviors internal) -->
+    <script>
+/* ===== Allblogpage inline JS (internal) =====
+   - collapsible pull-down search (click, keyboard, drag/touch)
+   - sendReaction (POST) for like/dislike
+   - click delegation for like/dislike
+   - double-tap detection on touch (mobile) + dblclick fallback
+   - heart flash on like
+   - progressive load-more
+*/
+
+/* helper: get CSRF cookie */
 function getCookie(name) {
-  let cookieValue = null
+  let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';')
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim()
+    const cookies = document.cookie.split(';');
+    for (let i=0;i<cookies.length;i++){
+      const cookie = cookies[i].trim();
       if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
-        break
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
       }
     }
   }
-  return cookieValue
+  return cookieValue;
 }
 
+/* ===== Collapsible / pull-down search (same logic as before) ===== */
+(function () {
+  const wrapper = document.getElementById('collapsible-search');
+  if (!wrapper) return;
+  const handle = document.getElementById('search-handle');
+  const panel = document.getElementById('collapsible-search-panel');
+  const clearBtn = document.getElementById('panel-clear');
+  const input = wrapper.querySelector('input[name="search"]');
+
+  let isOpen = wrapper.classList.contains('open');
+  let dragging = false;
+  let startY = 0;
+  let currentDelta = 0;
+  const MAX_PULL = 180; // px max pull distance
+  const OPEN_THRESHOLD = 60; // px threshold to auto-open on release
+
+  function setOpenState(open, skipAnim) {
+    isOpen = !!open;
+    if (isOpen) {
+      wrapper.classList.add('open');
+      wrapper.setAttribute('aria-expanded', 'true');
+      panel.setAttribute('aria-hidden', 'false');
+      if (!skipAnim) setTimeout(() => input && input.focus(), 120);
+    } else {
+      wrapper.classList.remove('open');
+      wrapper.setAttribute('aria-expanded', 'false');
+      panel.setAttribute('aria-hidden', 'true');
+      if (!skipAnim) input && input.blur();
+    }
+    wrapper.style.transform = '';
+  }
+
+  // Toggle on click (short tap)
+  handle.addEventListener('click', function (e) {
+    if (dragging) return;
+    setOpenState(!isOpen);
+  });
+
+  // Keyboard support
+  handle.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setOpenState(!isOpen);
+    }
+  });
+
+  if (clearBtn) clearBtn.addEventListener('click', function () {
+    if (input) { input.value = ''; input.focus(); }
+  });
+
+  // Dragging (pointer / touch / mouse)
+  const startDrag = (clientY) => {
+    dragging = true;
+    wrapper.classList.add('dragging');
+    startY = clientY;
+    currentDelta = 0;
+  };
+  const moveDrag = (clientY) => {
+    if (!dragging) return;
+    currentDelta = clientY - startY;
+    if (isOpen) currentDelta = Math.min(Math.max(currentDelta, -MAX_PULL), 0);
+    else currentDelta = Math.min(Math.max(currentDelta, 0), MAX_PULL);
+    wrapper.style.transform = `translateY(${currentDelta}px)`;
+  };
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    wrapper.classList.remove('dragging');
+    wrapper.style.transform = '';
+    if (!isOpen && currentDelta > OPEN_THRESHOLD) setOpenState(true);
+    else if (isOpen && currentDelta < -OPEN_THRESHOLD) setOpenState(false);
+    currentDelta = 0;
+    setTimeout(() => { dragging = false; }, 50);
+  };
+
+  if (window.PointerEvent) {
+    handle.addEventListener('pointerdown', (e) => {
+      handle.setPointerCapture(e.pointerId);
+      startDrag(e.clientY);
+    });
+    handle.addEventListener('pointermove', (e) => moveDrag(e.clientY));
+    handle.addEventListener('pointerup', (e) => {
+      try { handle.releasePointerCapture(e.pointerId); } catch (err) {}
+      endDrag();
+    });
+    handle.addEventListener('pointercancel', endDrag);
+  } else {
+    handle.addEventListener('mousedown', (e) => { startDrag(e.clientY); });
+    window.addEventListener('mousemove', (e) => moveDrag(e.clientY));
+    window.addEventListener('mouseup', endDrag);
+    handle.addEventListener('touchstart', (e) => { startDrag(e.touches[0].clientY); });
+    window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientY));
+    window.addEventListener('touchend', endDrag);
+  }
+
+  // Close on outside click & Escape
+  document.addEventListener('click', function (e) {
+    if (!isOpen) return;
+    if (wrapper.contains(e.target)) return;
+    setOpenState(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isOpen) setOpenState(false);
+  });
+
+  // init
+  setOpenState(isOpen, true);
+})();
+
+/* ===== sendReaction (POST) ===== */
 function sendReaction(blogId, type, likeBtn, dislikeBtn, likeCount, dislikeCount) {
-  const formData = new FormData()
-  formData.append('type', type)
-  fetch(`/react/${blogId}/`, {
+  const formData = new FormData();
+  formData.append('type', type);
+  const url = `/react/${blogId}/`;
+
+  fetch(url, {
     method: 'POST',
     body: formData,
     headers: { 'X-CSRFToken': getCookie('csrftoken') }
   })
   .then(res => {
-    if (!res.ok) return null
-    return res.json()
+    if (!res.ok) throw new Error('Network response not ok');
+    return res.json();
   })
   .then(data => {
-    if (!data) return
-    likeCount.textContent = data.likes
-    dislikeCount.textContent = data.dislikes
-    likeBtn.classList.toggle('active', data.active === 'like')
-    dislikeBtn.classList.toggle('active', data.active === 'dislike')
-  })
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.post-actions').forEach(container => {
-    const blogId = container.dataset.blog
-    const likeBtn = container.querySelector('.like')
-    const dislikeBtn = container.querySelector('.dislike')
-    const likeCount = container.querySelector('.like-count')
-    const dislikeCount = container.querySelector('.dislike-count')
-
-    if (likeBtn && dislikeBtn && likeCount && dislikeCount) {
-      likeBtn.addEventListener('click', () => sendReaction(blogId, 'like', likeBtn, dislikeBtn, likeCount, dislikeCount))
-      dislikeBtn.addEventListener('click', () => sendReaction(blogId, 'dislike', likeBtn, dislikeBtn, likeCount, dislikeCount))
+    if (data && typeof data === 'object') {
+      if (likeCount) likeCount.textContent = data.likes;
+      if (dislikeCount) dislikeCount.textContent = data.dislikes;
+      if (likeBtn) likeBtn.classList.toggle('active', data.active === 'like');
+      if (dislikeBtn) dislikeBtn.classList.toggle('active', data.active === 'dislike');
     }
   })
+  .catch(err => console.error('Reaction error', err));
+}
 
-  const btn = document.getElementById('load-more')
-  if (btn) {
-    btn.addEventListener('click', () => {
-      const nextPage = btn.dataset.next
-      const url = new URL(window.location.href)
-      if (!nextPage) return
-      url.searchParams.set('page', nextPage)
+/* ===== Click delegation for like/dislike buttons ===== */
+document.addEventListener('click', function (e) {
+  const clicked = e.target;
+  const likeBtn = clicked.closest ? clicked.closest('.like') : null;
+  const dislikeBtn = clicked.closest ? clicked.closest('.dislike') : null;
 
-      fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(html, 'text/html')
-          const newGrid = doc.querySelector('#post-grid')
-          if (!newGrid) return
-          const newPosts = newGrid.innerHTML
-          const grid = document.querySelector('#post-grid')
-          if (!grid) return
-          grid.insertAdjacentHTML('beforeend', newPosts)
+  if (likeBtn || dislikeBtn) {
+    e.preventDefault();
+    const container = (likeBtn || dislikeBtn).closest('.post-actions');
+    if (!container) return;
+    const blogId = container.dataset.blog;
+    const likeCount = container.querySelector('.like-count');
+    const dislikeCount = container.querySelector('.dislike-count');
+    const likeButton = container.querySelector('.like');
+    const dislikeButton = container.querySelector('.dislike');
+    const type = likeBtn ? 'like' : 'dislike';
 
-          const newBtn = doc.getElementById('load-more')
-          if (newBtn && newBtn.dataset.next) {
-            btn.dataset.next = newBtn.dataset.next
-          } else {
-            btn.remove()
-          }
-        })
-    })
+    sendReaction(blogId, type, likeButton, dislikeButton, likeCount, dislikeCount);
   }
-})
-</script>
+});
 
-</body>
+/* ===== Double-tap support for touch devices + dblclick fallback ===== */
+(function () {
+  // double-tap detector per element
+  const TAP_DELAY = 320; // ms threshold between taps
+  let lastTap = 0;
+  let lastTapTarget = null;
+
+  function triggerLikeByElement(postCard) {
+    if (!postCard) return;
+    const actions = postCard.querySelector('.post-actions');
+    if (!actions) return;
+    const blogId = actions.dataset.blog;
+    const likeCount = actions.querySelector('.like-count');
+    const dislikeCount = actions.querySelector('.dislike-count');
+    const likeButton = actions.querySelector('.like');
+    const dislikeButton = actions.querySelector('.dislike');
+
+    // heart flash
+    let heart = postCard.querySelector('.heart-flash');
+    if (!heart) {
+      heart = document.createElement('div');
+      heart.className = 'heart-flash';
+      heart.innerHTML = '<svg width="96" height="96" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.8 6.6c-1.5-3-4.9-3.7-7.1-1.8L12 6.3l-1.7-1.5C8.1 2.9 4.6 3.6 3.1 6.6c-1.5 3.1-.3 6.6 2.5 8.6L12 21l6.4-5.8c2.8-2 4-5.5 2.4-8.6z" fill="#FF2D55"/></svg>';
+      postCard.appendChild(heart);
+    }
+    heart.classList.add('show');
+    setTimeout(() => heart.classList.remove('show'), 700);
+
+    if (!blogId) return;
+    sendReaction(blogId, 'like', likeButton, dislikeButton, likeCount, dislikeCount);
+  }
+
+  // touchstart-based double-tap detection
+  document.addEventListener('touchend', function (e) {
+    // Only consider single-finger taps
+    if (e.touches && e.touches.length > 0) return;
+    const now = Date.now();
+    const target = e.target.closest ? e.target.closest('.post-image') : null;
+    if (!target) {
+      lastTap = 0;
+      lastTapTarget = null;
+      return;
+    }
+    if (lastTap && (now - lastTap) < TAP_DELAY && lastTapTarget === target) {
+      // double-tap detected
+      const postCard = target.closest('.post-card');
+      triggerLikeByElement(postCard);
+      lastTap = 0;
+      lastTapTarget = null;
+    } else {
+      lastTap = now;
+      lastTapTarget = target;
+      // reset after threshold
+      setTimeout(() => {
+        if (Date.now() - lastTap >= TAP_DELAY) {
+          lastTap = 0;
+          lastTapTarget = null;
+        }
+      }, TAP_DELAY + 20);
+    }
+  }, { passive: true });
+
+  // dblclick fallback for desktop
+  document.addEventListener('dblclick', function (e) {
+    const img = e.target.closest ? e.target.closest('.post-image') : null;
+    if (!img) return;
+    const postCard = img.closest('.post-card');
+    if (!postCard) return;
+    triggerLikeByElement(postCard);
+  });
+})();
+
+/* ===== load-more progressive fetch ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('load-more');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const nextPage = btn.dataset.next;
+    const url = new URL(window.location.href);
+    if (!nextPage) return;
+    url.searchParams.set('page', nextPage);
+
+    fetch(url)
+      .then(res => res.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newGrid = doc.querySelector('#post-grid');
+        if (!newGrid) return;
+        const newPosts = newGrid.innerHTML;
+        const grid = document.querySelector('#post-grid');
+        if (!grid) return;
+        grid.insertAdjacentHTML('beforeend', newPosts);
+
+        const newBtn = doc.getElementById('load-more');
+        if (newBtn && newBtn.dataset.next) {
+          btn.dataset.next = newBtn.dataset.next;
+        } else {
+          btn.remove();
+        }
+      })
+      .catch(err => console.error('load more error', err));
+  });
+});
+    </script>
+
+    <script src="{% static 'massages.js' %}"></script>
+  </body>
 </html>

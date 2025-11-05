@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Blog, Person, Reaction
+from .models import Blog, Person, Reaction,Comment
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -7,8 +7,10 @@ from .forms import BlogForm, EditBlogForm
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Sum
+from .utils import get_profile_stats 
 
 @login_required
 def home(request):
@@ -72,7 +74,7 @@ def register_page(request):
 @login_required    
 def logout_page(request):
     logout(request)
-    return redirect('login_url')
+    return redirect('all_blogs_url')
 
 @login_required
 def add_blog(request):
@@ -117,17 +119,38 @@ def delete_blog(request, pk):
 # def all_blogs(request):
 #     blogs = Blog.objects.all().order_by('-created_at')
 #     return render(request, 'allblogs.html', {'blogs': blogs})
-
 @login_required
 def myprofile(request):
-    user = request.user  # اینجا از Person هست
+    user = request.user  # Person
     if request.method == 'POST':
         if 'profilepic' in request.FILES:
             user.profilepic = request.FILES['profilepic']
             user.save()
             messages.success(request, 'Profile picture updated successfully!')
         return redirect('myprofile')
-    return render(request, 'myprofile.html', {'person': user})
+
+    # aggregates
+    posts_qs = Blog.objects.filter(author=user).order_by('-number_of_likes', '-created_at')
+    total_posts = posts_qs.count()
+    total_likes = posts_qs.aggregate(total=Sum('number_of_likes'))['total'] or 0
+    total_dislikes = posts_qs.aggregate(total=Sum('number_of_dislikes'))['total'] or 0
+
+    # فقط 4 پست اول برای نمایش در پروفایل
+    visible_posts = posts_qs[:4]
+    has_more = total_posts > 4
+
+    return render(
+        request,
+        'myprofile.html',
+        {
+            'person': user,
+            'total_posts': total_posts,
+            'total_likes': total_likes,
+            'total_dislikes': total_dislikes,
+            'posts': visible_posts,
+            'has_more_posts': has_more,
+        },
+    )
 
 
 # @login_required
@@ -215,32 +238,65 @@ def toggle_reaction(request, blog_id):
     })
 from django.core.paginator import Paginator
 def all_blogs(request):
-    search_query = request.GET.get('search', '')
-    blogs = Blog.objects.all().order_by('-created_at')
+    search_query = request.GET.get('search', '').strip()
 
     if search_query:
-        blogs = blogs.filter(title__icontains=search_query)
+        blogs_qs = (
+            Blog.objects.filter(title__icontains=search_query) |
+            Blog.objects.filter(author__username__icontains=search_query)
+        ).order_by('-created_at').distinct()
+    else:
+        blogs_qs = Blog.objects.all().order_by('-created_at')
 
     if request.user.is_authenticated:
-        for blog in blogs:
-            reaction = Reaction.objects.filter(user=request.user, blog=blog).first()
-            blog.reaction_type = reaction.type if reaction else None
+        user_reactions = Reaction.objects.filter(user=request.user, blog__in=blogs_qs)
+        reaction_map = {r.blog_id: r.type for r in user_reactions}
+        for blog in blogs_qs:
+            blog.reaction_type = reaction_map.get(blog.id)
     else:
-        for blog in blogs:
+        for blog in blogs_qs:
             blog.reaction_type = None
 
-    paginator = Paginator(blogs, 15)
+    paginator = Paginator(blogs_qs, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     context = {
         'blogs': page_obj,
-        'count': blogs.count(),
+        'count': blogs_qs.count(),
         'search_query': search_query,
     }
     return render(request, 'allblogs.html', context)
 
+def comments_view(request, blog_id):
+    blog = get_object_or_404(Blog, pk=blog_id)
+    # نمایش کامنت‌های سطح اول به همراه ریپلای‌هایشان (prefetch برای کاهش کوئری)
+    comments = Comment.objects.filter(blog=blog, reply_to=None).select_related('user').prefetch_related('replies__user')
+    return render(request, 'comments.html', {'blog': blog, 'comments': comments})
 
-# def all_blogs(request):
-#     blogs = Blog.objects.all().order_by('-created_at')
-#     return render(request, ss'allblogs.html', {'blogs': blogs})
+@login_required
+def add_comment_view(request, blog_id):
+    blog = get_object_or_404(Blog, pk=blog_id)
+    if request.method == 'POST':
+        text = request.POST.get('text', '').strip()
+        reply_to_id = request.POST.get('reply_to') or None
+        reply_to = Comment.objects.filter(pk=reply_to_id).first() if reply_to_id else None
+        if text:
+            Comment.objects.create(blog=blog, user=request.user, text=text, reply_to=reply_to)
+    return redirect('comments', blog_id=blog.id)
+
+# def allblogs_view(request):
+#     blogs = Blog.objects.all().prefetch_related('comments')
+#     blog_data = []
+
+#     for blog in blogs:
+#         blog_data.append({
+#             'id': blog.id,
+#             'title': blog.title,
+#             'text': blog.text,
+#             'image': blog.image,
+#             'comment_count': blog.comments.count(),  # تعداد کامنت‌ها
+#         })
+
+#     return render(request, 'allblogs.html', {'blogs': blog_data})
+

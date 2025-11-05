@@ -1,90 +1,141 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="fa">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Blog App</title>
-    <link rel="stylesheet" href="{% static 'HomePage\css\style.css' %}">
-    <style>
-        nav {
-            background: #eee;
-            padding: 10px;
-        }
-
-        nav a {
-            margin-right: 15px;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .blog {
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-        }
-
-        .blog img {
-            max-width: 300px;
-            display: block;
-            margin-bottom: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home - Blog App</title>
+  <link rel="stylesheet" href="{% static 'HomePage/css/style.css' %}">
 </head>
-
 <body>
-    <!-- <form method="get" action="">
-        <input type="text" name="search" placeholder="Search blogs..." value="{{ request.GET.search }}">
-        <button type="submit">Search</button>
-    </form> -->
 
-    {% include 'navbar.html' %}
-    <style>
-        nav {
-            background: #eee;
-            padding: 10px;
-        }
+  <header class="page-header">
+    <h1 class="page-title">All Blogs</h1>
 
-        nav a {
-            margin-right: 15px;
-            text-decoration: none;
-            color: #333;
-        }
-    </style>
-    <h1>All Blogs of {{ request.user.username }}</h1>
-    <hr>
-    <a href="{% url 'add_blog_url' %}" style="text-decoration: none; ">
-        <h2>+Add Blog</h2>
-    </a>
-
-    <div class="blogs">
-
-        {% for blog in blogs %}
-        <div class="blog">
-            {% if blog.image %}
-            <img src="{{ blog.image.url }}" alt="{{ blog.title }}">
-            {% endif %}
-            <div class="info">
-                <h2>{{ blog.title }}</h2>
-                <p>{{ blog.text }}</p>
-                <small>By {{ blog.author.name }} on {{ blog.created_at|date:"Y-m-d H:i" }}</small>
-                <br>
-                <a href="{% url 'edit_blog_url' blog.id %}">Edit Blog</a>
-                <br>
-                <a href="{% url 'delete_blog_url' blog.pk %}">Delete Blog</a>
-            </div>
-        </div>
-        {% empty %}
-        <p>No blogs available.</p>
-        {% endfor %}
+    <div class="header-actions">
+      <a class="btn primary" href="{% url 'add_blog_url' %}">+ Add Post</a>
+      <a class="btn" href="{% url 'all_blogs_url' %}">بازگشت به خانه</a>
+      <a class="btn" href="{% url 'myprofile' %}">پروفایل</a>
     </div>
-    {% if messages %}
-    {% for message in messages %}
-    <div class="django-message" data-message="{{ message }}"></div>
-    {% endfor %}
-    {% endif %}
-    <script src="{% static 'massages.js' %}"></script>
-</body>
+  </header>
 
+  <main class="content">
+    <div id="blogs-grid" class="blogs-grid">
+      {% for blog in blogs %}
+      <article class="card" data-created="{{ blog.created_at|date:'U' }}" data-index="{{ forloop.counter0 }}">
+        {% if blog.image %}
+        <div class="thumb">
+          <img src="{{ blog.image.url }}" alt="{{ blog.title }}">
+        </div>
+        {% else %}
+        <div class="thumb placeholder">
+          <img src="{% static 'HomePage/images/no-image.png' %}" alt="no image">
+        </div>
+        {% endif %}
+
+        <div class="card-body">
+          <h2 class="card-title">{{ blog.title }}</h2>
+          <p class="card-excerpt">{{ blog.text|truncatechars:140 }}</p>
+        </div>
+
+        <footer class="card-footer">
+          <div class="meta">
+            <span class="author">By {{ blog.author.username }}</span>
+            <time class="time">{{ blog.created_at|date:"Y-m-d H:i" }}</time>
+          </div>
+
+          <div class="actions">
+
+            <a class="action-btn" href="{% url 'edit_blog_url' blog.id %}" title="Edit">
+              <img src="{% static 'HomePage/edit.svg' %}" alt="edit" width="18" height="18">
+            </a>
+            <a class="action-btn destructive" href="{% url 'delete_blog_url' blog.id %}" title="Delete">
+              <img src="{% static 'HomePage/delete.svg' %}" alt="delete" width="18" height="18">
+            </a>
+            <div class="likes">
+              <img src="{% static 'HomePage/like.svg' %}" alt="likes" width="16" height="16">
+              <span class="likes-count">{{ blog.number_of_likes|default:0 }}</span>
+            </div>
+            <div class="dislikes">
+              <img src="{% static 'HomePage/unlike.svg' %}" alt="dislikes" width="16" height="16">
+              <span class="dislikes-count">{{ blog.number_of_dislikes|default:0 }}</span>
+            </div>
+          </div>
+        </footer>
+      </article>
+      {% empty %}
+      <p class="no-blogs">No blogs available.</p>
+      {% endfor %}
+    </div>
+
+    <div id="show-more-wrap" class="show-more-wrap" style="display:none;">
+      <button id="show-more-btn" class="btn">Show more</button>
+    </div>
+  </main>
+
+  {% if messages %}
+  {% for message in messages %}
+  <div class="django-message" data-message="{{ message }}"></div>
+  {% endfor %}
+  {% endif %}
+
+  <script>
+    // client-side pagination: show newest posts first, 10 at a time
+document.addEventListener('DOMContentLoaded', function () {
+  const GRID = document.getElementById('blogs-grid');
+  const SHOW_MORE_WRAP = document.getElementById('show-more-wrap');
+  const SHOW_MORE_BTN = document.getElementById('show-more-btn');
+
+  if (!GRID) return;
+
+  // collect cards and sort by data-created (timestamp) descending to ensure newest first
+  const cards = Array.from(GRID.querySelectorAll('.card'));
+  cards.sort((a, b) => {
+    const ta = parseInt(a.getAttribute('data-created') || '0', 10);
+    const tb = parseInt(b.getAttribute('data-created') || '0', 10);
+    return tb - ta;
+  });
+
+  // re-append in sorted order
+  GRID.innerHTML = '';
+  cards.forEach(card => GRID.appendChild(card));
+
+  const PAGE_SIZE = 10;
+  let visible = 0;
+
+  function renderChunk() {
+    const next = Math.min(visible + PAGE_SIZE, cards.length);
+    for (let i = visible; i < next; i++) {
+      cards[i].style.display = '';
+    }
+    visible = next;
+    // hide remaining cards
+    for (let i = visible; i < cards.length; i++) {
+      cards[i].style.display = 'none';
+    }
+    // control show more button
+    if (visible < cards.length) {
+      SHOW_MORE_WRAP.style.display = 'block';
+    } else {
+      SHOW_MORE_WRAP.style.display = 'none';
+    }
+  }
+
+  // initial render
+  renderChunk();
+
+  // bind show more
+  if (SHOW_MORE_BTN) {
+    SHOW_MORE_BTN.addEventListener('click', function (e) {
+      e.preventDefault();
+      renderChunk();
+      // scroll smoothly to newly revealed block (optional)
+      const lastVisible = cards[Math.min(visible - 1, cards.length - 1)];
+      if (lastVisible) lastVisible.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+  }
+});
+
+  </script>
+</body>
 </html>

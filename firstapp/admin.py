@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Person, Blog, Reaction
+from .models import Person, Blog, Reaction, Comment
 
 class BlogInline(admin.TabularInline):  # or admin.StackedInline for a different style
     model = Blog
@@ -11,3 +11,4 @@ class PersonAdmin(admin.ModelAdmin):
 admin.site.register(Person, PersonAdmin)
 admin.site.register(Blog)
 admin.site.register(Reaction)
+admin.site.register(Comment)
